@@ -41,7 +41,7 @@ if(!String.prototype.formatNum) {
 	var defaults = {
 		// Width of the calendar
 		width:              '100%',
-		// Initial view (can be 'month', 'week', 'day')
+		// Initial view (can be 'month', 'weeks', 'week', 'day')
 		view:               'month',
 		// Initial date. No matter month, week or day this will be a starting point. Can be 'now' or a date in format 'yyyy-mm-dd'
 		day:                'now',
@@ -96,6 +96,10 @@ if(!String.prototype.formatNum) {
 				slide_events: 1,
 				enable:       1
 			},
+            weeks: {
+                slide_events: 1,
+                enable:       1
+            },
 			week:  {
 				enable: 1
 			},
@@ -132,7 +136,8 @@ if(!String.prototype.formatNum) {
 			year:  '',
 			month: '',
 			week:  '',
-			day:   ''
+			day:   '',
+			weeks: ''
 		},
 		stop_cycling:       false
 	};
@@ -175,6 +180,7 @@ if(!String.prototype.formatNum) {
 		title_year:  '{0}',
 		title_month: '{0} {1}',
 		title_week:  'week {0} of {1}',
+		title_weeks: '{0} {1}',
 		title_day:   '{0} {1} {2}, {3}',
 
 		week:        'Week {0}',
@@ -424,6 +430,9 @@ if(!String.prototype.formatNum) {
 			case 'day':
 				this._calculate_hour_minutes(data);
 				break;
+            case 'weeks':
+                data.day = this.options.position.start.getDate();
+                break;
 		}
 
 		data.start = new Date(this.options.position.start.getTime());
@@ -639,6 +648,77 @@ if(!String.prototype.formatNum) {
 		return this.options.templates['month-day'](t);
 	}
 
+	Calendar.prototype._weeksDay = function (week, day) {
+        this._loadTemplate('month-day');
+
+        var t = {tooltip: '', cal: this};
+        var cls = this.options.classes.months.outmonth;
+
+
+        var months = [];
+        var start = this.options.position.start;
+
+        var curdate = new Date(start.getFullYear(), start.getMonth(), day, 0, 0, 0);
+
+        var monthDays = this.getDaysInMonth(start.getFullYear(), start.getMonth());
+        months[0] = {
+            month: start.getMonth(),
+            days: monthDays - start.getDate() + 1,
+            daysInMonth: monthDays
+        };
+        var nextMonthFirstDay = new Date(start.getFullYear(), start.getMonth(), 1);
+        nextMonthFirstDay.setMonth(start.getMonth() + 1);
+        monthDays = this.getDaysInMonth(nextMonthFirstDay.getFullYear(), nextMonthFirstDay.getMonth());
+        if (months[0].days + monthDays <= 35) {
+            months[1] = {
+                month: nextMonthFirstDay.getMonth(),
+                days: monthDays,
+                daysInMonth: monthDays
+            };
+            if (months[0].days + months[1].days < 35) {
+                var thirdMonthFirstDay = new Date(nextMonthFirstDay);
+                thirdMonthFirstDay.setMonth(thirdMonthFirstDay.getMonth() + 1);
+                months[2] = {
+                    month: thirdMonthFirstDay.getMonth(),
+                    days: 35 - months[0].days - months[1].days,
+                    daysInMonth: this.getDaysInMonth(thirdMonthFirstDay.getFullYear(), thirdMonthFirstDay.getMonth())
+                };
+            }
+        } else {
+            months[1] = {
+                month: months[0].month + 1,
+                days: 35 - months[0].days
+            };
+        }
+
+        cls = this.options.classes.months.inmonth;
+        if (day > months[0].daysInMonth) {
+            day = day - months[0].daysInMonth;
+            cls = this.options.classes.months.outmonth;
+        }
+        if (day > months[1].daysInMonth) {
+            day = day - months[0].daysInMonth - months[1].daysInMonth;
+            cls = this.options.classes.months.outmonth;
+        }
+
+
+        cls = $.trim(cls + " " + this._getDayClass("months", curdate));
+
+        var holiday = this._getHoliday(curdate);
+        if(holiday !== false) {
+            t.tooltip = holiday;
+        }
+
+        t.data_day = curdate.getFullYear() + '-' + curdate.getMonthFormatted() + '-' + (day < 10 ? '0' + day : day);
+        t.cls = cls;
+        t.day = day;
+
+        t.start = parseInt(curdate.getTime());
+        t.end = parseInt(t.start + 86400000);
+        t.events = this.getEventsBetween(t.start, t.end);
+        return this.options.templates['month-day'](t);
+    };
+
 	Calendar.prototype._getHoliday = function(date) {
 		var result = false;
 		$.each(getHolidays(this, date.getFullYear()), function() {
@@ -722,6 +802,9 @@ if(!String.prototype.formatNum) {
 				case 'week':
 					to.start.setDate(this.options.position.start.getDate() + 7);
 					break;
+                case 'weeks':
+                    to.start.setDate(this.options.position.start.getDate() + 35);
+                    break;
 				case 'day':
 					to.start.setDate(this.options.position.start.getDate() + 1);
 					break;
@@ -737,6 +820,9 @@ if(!String.prototype.formatNum) {
 				case 'week':
 					to.start.setDate(this.options.position.start.getDate() - 7);
 					break;
+                case 'weeks':
+                    to.start.setDate(this.options.position.start.getDate() - 35);
+                    break;
 				case 'day':
 					to.start.setDate(this.options.position.start.getDate() - 1);
 					break;
@@ -785,6 +871,18 @@ if(!String.prototype.formatNum) {
 				this.options.position.start.setTime(new Date(year, month, day).getTime());
 				this.options.position.end.setTime(new Date(year, month, day + 1).getTime());
 				break;
+            case 'weeks':
+                var curr = new Date(year, month, day);
+                var first;
+                if(getExtentedOption(this, 'first_day') == 1) {
+                    first = curr.getDate() - ((curr.getDay() + 6) % 7);
+                }
+                else {
+                    first = curr.getDate() - curr.getDay();
+                }
+                this.options.position.start.setTime(new Date(year, month, first).getTime());
+                this.options.position.end.setTime(new Date(year, month, first + 35).getTime());
+                break;
 			case 'week':
 				var curr = new Date(year, month, day);
 				var first;
@@ -815,6 +913,9 @@ if(!String.prototype.formatNum) {
 			case 'week':
 				return this.locale.title_week.format(p.getWeek(), p.getFullYear());
 				break;
+            case 'weeks':
+                return this.locale.title_weeks.format(this.locale['m' + p.getMonth()], p.getFullYear());
+                break;
 			case 'day':
 				return this.locale.title_day.format(this.locale['d' + p.getDay()], p.getDate(), this.locale['m' + p.getMonth()], p.getFullYear());
 				break;
@@ -822,7 +923,13 @@ if(!String.prototype.formatNum) {
 		return;
 	};
 
-	Calendar.prototype.isToday = function() {
+    Calendar.prototype.getDaysInMonth = function (year, month) {
+        month = parseInt(month, 10);
+        var temp = new Date(year + "/" + month + "/1");
+        return new Date(temp - 1).getDate();
+    };
+
+    Calendar.prototype.isToday = function() {
 		var now = new Date().getTime();
 
 		return ((now > this.options.position.start) && (now < this.options.position.end));
@@ -1073,6 +1180,8 @@ if(!String.prototype.formatNum) {
 			$('div.cal-cell1').removeClass('day-highlight dh-' + $(this).data('event-class'));
 		});
 	};
+
+	Calendar.prototype._update_weeks = Calendar.prototype._update_month;
 
 	Calendar.prototype._update_month_year = function() {
 		if(!this.options.views[this.options.view].slide_events) {
