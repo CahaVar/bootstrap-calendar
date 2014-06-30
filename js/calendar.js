@@ -180,7 +180,7 @@ if(!String.prototype.formatNum) {
 		title_year:  '{0}',
 		title_month: '{0} {1}',
 		title_week:  'week {0} of {1}',
-		title_weeks: '{0} {1}',
+		title_weeks: '{0}-{1}-{2} ~ {3}-{4}-{5}',
 		title_day:   '{0} {1} {2}, {3}',
 
 		week:        'Week {0}',
@@ -697,7 +697,7 @@ if(!String.prototype.formatNum) {
             cls = this.options.classes.months.outmonth;
         }
         if (day > months[1].daysInMonth) {
-            day = day - months[0].daysInMonth - months[1].daysInMonth;
+            day = day  - months[1].daysInMonth;
             cls = this.options.classes.months.outmonth;
         }
 
@@ -914,7 +914,9 @@ if(!String.prototype.formatNum) {
 				return this.locale.title_week.format(p.getWeek(), p.getFullYear());
 				break;
             case 'weeks':
-                return this.locale.title_weeks.format(this.locale['m' + p.getMonth()], p.getFullYear());
+                var end = this.options.position.end;
+                end.setDate(end.getDate() - 1);
+                return this.locale.title_weeks.format(p.getFullYear(), p.getMonthFormatted(), p.getDate(), end.getFullYear(), end.getMonthFormatted(), end.getDate());
                 break;
 			case 'day':
 				return this.locale.title_day.format(this.locale['d' + p.getDay()], p.getDate(), this.locale['m' + p.getMonth()], p.getFullYear());
@@ -924,7 +926,7 @@ if(!String.prototype.formatNum) {
 	};
 
     Calendar.prototype.getDaysInMonth = function (year, month) {
-        month = parseInt(month, 10);
+        month = parseInt(month + 1, 10) + 1;
         var temp = new Date(year + "/" + month + "/1");
         return new Date(temp - 1).getDate();
     };
