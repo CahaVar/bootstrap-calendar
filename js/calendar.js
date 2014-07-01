@@ -652,7 +652,7 @@ if(!String.prototype.formatNum) {
         this._loadTemplate('month-day');
 
         var t = {tooltip: '', cal: this, monthTip: '' };
-        var cls = this.options.classes.months.outmonth;
+        var cls = this.options.classes.months.inmonth;
 
         var months = [];
         var start = this.options.position.start;
@@ -695,7 +695,6 @@ if(!String.prototype.formatNum) {
         	t.monthTip = this.locale['m' + start.getMonth().toString()];
         }
 
-        cls = this.options.classes.months.inmonth;
         if (day === months[0].daysInMonth) {
         	t.monthTip = this.locale['m' + start.getMonth().toString()];
         }
@@ -707,14 +706,12 @@ if(!String.prototype.formatNum) {
 		        if (day === months[1].daysInMonth) {
 		        	t.monthTip = this.locale['m' + nextMonthFirstDay.getMonth().toString()];
 		        }
-            cls = this.options.classes.months.outmonth;
 
             if (day > months[1].daysInMonth) {
 		            day = day - months[1].daysInMonth;
 		            if (thirdMonthFirstDay && day === 1) {
 				        	t.monthTip = this.locale['m' + thirdMonthFirstDay.getMonth().toString()];
 				        }
-		            cls = this.options.classes.months.outmonth;
 		        }
         }
 
