@@ -658,7 +658,6 @@ if(!String.prototype.formatNum) {
         var start = this.options.position.start;
 
         var curdate = new Date(start.getFullYear(), start.getMonth(), day, 0, 0, 0);
-
         var monthDays = this.getDaysInMonth(start.getFullYear(), start.getMonth());
         months[0] = {
             month: start.getMonth(),
@@ -685,7 +684,7 @@ if(!String.prototype.formatNum) {
             }
         } else {
             months[1] = {
-                month: months[0].month + 1,
+                month: nextMonthFirstDay.getMonth(),
                 days: 35 - months[0].days,
                 daysInMonth: monthDays
             };
@@ -726,7 +725,6 @@ if(!String.prototype.formatNum) {
         t.data_day = curdate.getFullYear() + '-' + curdate.getMonthFormatted() + '-' + (day < 10 ? '0' + day : day);
         t.cls = cls;
         t.day = day;
-
         t.start = parseInt(curdate.getTime());
         t.end = parseInt(t.start + 86400000);
         t.events = this.getEventsBetween(t.start, t.end);
@@ -940,9 +938,10 @@ if(!String.prototype.formatNum) {
 	};
 
     Calendar.prototype.getDaysInMonth = function (year, month) {
-        month = parseInt(month + 1, 10) + 1;
-        var temp = new Date(year + "/" + month + "/1");
-        return new Date(temp - 1).getDate();
+        var startDate = new Date(year, month, 1);
+				var endDate = new Date(year, month + 1, 1);
+				var days = (endDate - startDate) / (1000 * 60 * 60 * 24);
+				return days;
     };
 
     Calendar.prototype.isToday = function() {
