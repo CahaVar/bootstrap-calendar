@@ -139,7 +139,11 @@ if(!String.prototype.formatNum) {
 			day:   '',
 			weeks: ''
 		},
-		stop_cycling:       false
+		stop_cycling:       false,
+		//事件列表显示位置，0为内部，1为外部
+		eventShow: 0,
+		//如果eventShow为1时，为显示的容器的id
+		eventShowContainer: '#cal-event-box'
 	};
 
 	var defaults_extended = {
@@ -1232,34 +1236,48 @@ if(!String.prototype.formatNum) {
 		}
 		var self = this;
 		var activecell = 0;
-		var downbox = $(document.createElement('div')).attr('id', 'cal-day-tick').html('<i class="icon-chevron-down glyphicon glyphicon-chevron-down"></i>');
+		if(this.options.eventShow==0){
+			var downbox = $(document.createElement('div')).attr('id', 'cal-day-tick').html('<i class="icon-chevron-down glyphicon glyphicon-chevron-down"></i>');
 
-		$('.cal-month-day, .cal-year-box .span3')
-			.on('mouseenter', function() {
-				if($('.events-list', this).length == 0) return;
-				if($(this).children('[data-cal-date]').text() == self.activecell) return;
-				downbox.show().appendTo(this);
-			})
-			.on('mouseleave', function() {
-				downbox.hide();
-			})
-			.on('click', function(event) {
-				if($('.events-list', this).length == 0) return;
-				if($(this).children('[data-cal-date]').text() == self.activecell) return;
-				showEventsList(event, downbox, slider, self);
-			})
-		;
+			$('.cal-month-day, .cal-year-box .span3')
+				.on('mouseenter', function() {
+					if($('.events-list', this).length == 0) return;
+					if($(this).children('[data-cal-date]').text() == self.activecell) return;
+					downbox.show().appendTo(this);
+				})
+				.on('mouseleave', function() {
+					downbox.hide();
+				})
+				.on('click', function(event) {
+					if($('.events-list', this).length == 0) return;
+					if($(this).children('[data-cal-date]').text() == self.activecell) return;
+					showEventsList(event, downbox, slider, self);
 
-		var slider = $(document.createElement('div')).attr('id', 'cal-slide-box');
-		slider.hide().click(function(event) {
-			event.stopPropagation();
-		});
 
-		this._loadTemplate('events-list');
+				})
+			;
 
-		downbox.click(function(event) {
-			showEventsList(event, $(this), slider, self);
-		});
+			var slider = $(document.createElement('div')).attr('id', 'cal-slide-box');
+			slider.hide().click(function(event) {
+				event.stopPropagation();
+			});
+
+			this._loadTemplate('events-list');
+
+			downbox.click(function(event) {
+				showEventsList(event, $(this), slider, self);
+			});
+		}
+		else{
+			$('.cal-month-day, .cal-year-box .span3')
+				.on('click', function(event) {
+					showEventsList(event, this, slider, self);
+				})
+			;
+			var slider = $(this.options.eventShowContainer);
+			this._loadTemplate('events-list-out');
+		}
+
 	};
 
 	Calendar.prototype.getEventsBetween = function(start, end) {
@@ -1278,43 +1296,62 @@ if(!String.prototype.formatNum) {
 
 	function showEventsList(event, that, slider, self) {
 
-		event.stopPropagation();
+		//event.stopPropagation();
+		if(self.options.eventShow!==1){
+			var that = $(that);
+			var cell = that.closest('.cal-cell');
+			var row = cell.closest('.cal-before-eventlist');
+			var tick_position = cell.data('cal-row');
 
-		var that = $(that);
-		var cell = that.closest('.cal-cell');
-		var row = cell.closest('.cal-before-eventlist');
-		var tick_position = cell.data('cal-row');
+			that.fadeOut('fast');
 
-		that.fadeOut('fast');
-
-		slider.slideUp('fast', function() {
-			var event_list = $('.events-list', cell);
-			slider.html(self.options.templates['events-list']({
-				cal:    self,
-				events: self.getEventsBetween(parseInt(event_list.data('cal-start')), parseInt(event_list.data('cal-end')))
-			}));
-			row.after(slider);
-			self.activecell = $('[data-cal-date]', cell).text();
-			$('#cal-slide-tick').addClass('tick' + tick_position).show();
-			slider.slideDown('fast', function() {
-				$('body').one('click', function() {
-					slider.slideUp('fast');
-					self.activecell = 0;
+			slider.slideUp('fast', function() {
+				var event_list = $('.events-list', cell);
+				slider.html(self.options.templates['events-list']({
+					cal:    self,
+					events: self.getEventsBetween(parseInt(event_list.data('cal-start')), parseInt(event_list.data('cal-end')))
+				}));
+				row.after(slider);
+				self.activecell = $('[data-cal-date]', cell).text();
+				$('#cal-slide-tick').addClass('tick' + tick_position).show();
+				slider.slideDown('fast', function() {
+					$('body').one('click', function() {
+						slider.slideUp('fast');
+						self.activecell = 0;
+					});
 				});
 			});
-		});
 
-		$('a.event-item').mouseenter(function() {
-			$('a[data-event-id="' + $(this).data('event-id') + '"]').closest('.cal-cell1').addClass('day-highlight dh-' + $(this).data('event-class'));
-		});
-		$('a.event-item').mouseleave(function() {
-			$('div.cal-cell1').removeClass('day-highlight dh-' + $(this).data('event-class'));
-		});
+			$('a.event-item').mouseenter(function() {
+				$('a[data-event-id="' + $(this).data('event-id') + '"]').closest('.cal-cell1').addClass('day-highlight dh-' + $(this).data('event-class'));
+			});
+			$('a.event-item').mouseleave(function() {
+				$('div.cal-cell1').removeClass('day-highlight dh-' + $(this).data('event-class'));
+			});
 
-		// Wait 400ms before updating the modal (400ms is the time for the slider to fade out and slide up)
-		setTimeout(function() {
-			self._update_modal();
-		}, 400);
+			// Wait 400ms before updating the modal (400ms is the time for the slider to fade out and slide up)
+			setTimeout(function() {
+				self._update_modal();
+			}, 400);
+		}
+		else{
+
+			var event_list = $(that).find('.events-list');
+			slider.html(self.options.templates['events-list-out']({
+				cal:    self,
+				events: self.getEventsBetween(parseInt(event_list.data('cal-start')), parseInt(event_list.data('cal-end'))),
+				time: {
+					date: $(that).find('[data-cal-date]').text(),
+					time: $(that).find('[data-cal-date]').attr('data-cal-date')
+				}
+			}));
+			self.activecell = $(that).find('[data-cal-date]').text();
+			// Wait 400ms before updating the modal (400ms is the time for the slider to fade out and slide up)
+			setTimeout(function() {
+				self._update_modal();
+			}, 400);
+		}
+
 	}
 
 	function getEasterDate(year, offsetDays) {
