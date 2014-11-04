@@ -851,7 +851,9 @@ if(!String.prototype.formatNum) {
 		}
 		this.options.day = to.start.getFullYear() + '-' + to.start.getMonthFormatted() + '-' + to.start.getDateFormatted();
 		this.view();
-		$('.cal-month-day [data-cal-date="'+this.options.day+'"').click();
+		if(where=='today'){
+			$('.cal-month-day [data-cal-date="'+this.options.day+'"').click();
+		}
 		if(_.isFunction(next)) {
 			next();
 		}
