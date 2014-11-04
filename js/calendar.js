@@ -818,9 +818,9 @@ if(!String.prototype.formatNum) {
 				case 'week':
 					to.start.setDate(this.options.position.start.getDate() + 7);
 					break;
-                case 'weeks':
-                    to.start.setDate(this.options.position.start.getDate() + 35);
-                    break;
+        case 'weeks':
+            to.start.setDate(this.options.position.start.getDate() + 35);
+            break;
 				case 'day':
 					to.start.setDate(this.options.position.start.getDate() + 1);
 					break;
@@ -836,9 +836,9 @@ if(!String.prototype.formatNum) {
 				case 'week':
 					to.start.setDate(this.options.position.start.getDate() - 7);
 					break;
-                case 'weeks':
-                    to.start.setDate(this.options.position.start.getDate() - 35);
-                    break;
+        case 'weeks':
+            to.start.setDate(this.options.position.start.getDate() - 35);
+            break;
 				case 'day':
 					to.start.setDate(this.options.position.start.getDate() - 1);
 					break;
@@ -851,6 +851,7 @@ if(!String.prototype.formatNum) {
 		}
 		this.options.day = to.start.getFullYear() + '-' + to.start.getMonthFormatted() + '-' + to.start.getDateFormatted();
 		this.view();
+		$('.cal-month-day [data-cal-date="'+this.options.day+'"').click();
 		if(_.isFunction(next)) {
 			next();
 		}
@@ -941,14 +942,14 @@ if(!String.prototype.formatNum) {
 		return;
 	};
 
-    Calendar.prototype.getDaysInMonth = function (year, month) {
-        var startDate = new Date(year, month, 1);
-				var endDate = new Date(year, month + 1, 1);
-				var days = (endDate - startDate) / (1000 * 60 * 60 * 24);
-				return days;
-    };
+  Calendar.prototype.getDaysInMonth = function (year, month) {
+      var startDate = new Date(year, month, 1);
+			var endDate = new Date(year, month + 1, 1);
+			var days = (endDate - startDate) / (1000 * 60 * 60 * 24);
+			return days;
+  };
 
-    Calendar.prototype.isToday = function() {
+  Calendar.prototype.isToday = function() {
 		var now = new Date().getTime();
 
 		return ((now > this.options.position.start) && (now < this.options.position.end));
@@ -1056,18 +1057,18 @@ if(!String.prototype.formatNum) {
 		var self = this;
 
 		$('*[data-toggle="tooltip"]').tooltip({container: 'body'});
-
-		$('*[data-cal-date]').click(function() {
-			var view = $(this).data('cal-view');
-			self.options.day = $(this).data('cal-date');
-			self.view(view);
-		});
-		$('.cal-cell').dblclick(function() {
-			var view = $('[data-cal-date]', this).data('cal-view');
-			self.options.day = $('[data-cal-date]', this).data('cal-date');
-			self.view(view);
-		});
-
+		if(self.options.eventShow==0){
+			$('*[data-cal-date]').click(function() {
+				var view = $(this).data('cal-view');
+				self.options.day = $(this).data('cal-date');
+				self.view(view);
+			});
+			$('.cal-cell').dblclick(function() {
+				var view = $('[data-cal-date]', this).data('cal-view');
+				self.options.day = $('[data-cal-date]', this).data('cal-date');
+				self.view(view);
+			});
+		}
 		this['_update_' + this.options.view]();
 
 		this._update_modal();
